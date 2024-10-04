@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XOArmor 3D Tool</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/PLYLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/exporters/PLYExporter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/exporters/STLExporter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@13.1.1/lib/browser/math.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/numeric@1.2.6/numeric-1.2.6.min.js"></script>
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .form-range {
+            width: 100%;
+        }
+
+        #controls-container {
+            height: 100vh; /* Full height for controls */
+            overflow: auto; /* Allow scrolling if needed */
+        }
+
+        #canvas3d {
+            height: 100vh; /* Full height for 3D view */
+            position: relative;
+            background-color: #000; /* Background for better visibility */
+        }
+
+        #overlay {
+            pointer-events: none; /* Prevent interaction blocking */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #contextMenu {
+            display: none;
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            z-index: 1000;
+        }
+
+        #contextMenu ul {
+            list-style: none;
+            padding: 10px;
+            margin: 0;
+        }
+
+        #contextMenu li {
+            padding: 10px; /* Ensure the padding matches Bootstrap's spacing */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            color: #333; /* Default text color */
+        }
+
+        #contextMenu li:hover {
+            background-color: #007bff; /* Bootstrap primary color for hover */
+            color: white; /* Text color on hover */
+        }
+
+        #comboBox {
+            width: auto; /* Adjust width similar to button size */
+            padding: 0.375rem 0.75rem; /* Button-like padding */
+            font-size: 1rem;
+            line-height: 1.5;
+            border: 1px solid #eef0f3; /* Same as Bootstrap primary button */
+            border-radius: 0.375rem;
+        }
+
+        .tick {
+            display: none; /* Initially hide the tick */
+        }
+
+        .tick.checked {
+            display: inline-block; /* Show the tick when checked */
+        }
+        .custom-img-size {
+            width: 300px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <div id="controls-container" class="col-md-3">
+            <hr>
+            <hr>
+            <div class="card">
+                <div class="card-header">
+                    Upload PLY File
+                </div>
+                <form id="uploadForm" enctype="multipart/form-data" method="POST">
+                    <div class="mb-3 d-flex">
+                        <input class="form-control me-2" type="file" id="fileInput" name="file">
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+            <hr>
+            <div class="card">
+                <div class="card-header">
+                    Camera Controls
+                </div>
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary" id="buttonXY">XY</button>
+                        <button type="button" class="btn btn-primary" id="buttonYZ">YZ</button>
+                        <button type="button" class="btn btn-primary" id="buttonXZ">XZ</button>
+                        <button type="button" class="btn btn-primary" id="buttonXYZ">XYZ</button>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="buttonReflect">Reflect</button>
+                    <button type="button" class="btn btn-primary" id="buttonFlip">Flip up</button>
+                    <hr>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary" id="buttonPerspective">Perspective</button>
+                        <button type="button" class="btn btn-primary" id="buttonOrthographic">Orthographic</button>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="card">
+                <div class="card-header">
+                    Material
+                </div>
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary" id="smooth">Smooth</button>
+                        <button type="button" class="btn btn-primary" id="wireframe">Wireframe</button>
+                        <button type="button" class="btn btn-primary" id="xray">XRay</button>
+                    </div>
+                    <hr>
+                    <div class="input-group mb-3">
+                        <label for="opacity">Opacity</label>
+                        <input type="range" class="form-range" id="opacity" min="0" max="1" step="0.01">
+                    </div>
+                    <hr>
+                </div>
+            </div>
+            <hr>
+
+        </div>
+        <div class="col-md-5 position-relative" id="canvas3d">
+            <!--
+            <div id="contextMenu" style="display:none; position: absolute; background-color: #fff; border: 1px solid
+            #ccc;">
+                <ul id="menuContent" style="list-style: none; padding: 10px; margin: 0;">
+                    <li id="wrist" style="padding: 5px; cursor: pointer;">Wrist (Radial, Upper Central, Ulnar)</li>
+                    <li id="knuckles" style="padding: 5px; cursor: pointer;">Knuckles 1-4 (Index first)</li>
+                    <li id="thumb" style="padding: 5px; cursor: pointer;">Thumb (Metacarpal and Distal)</li>
+                </ul>
+            </div>
+            -->
+            <canvas id="overlay">
+
+            </canvas>
+        </div>
+        <div class="col-md-4 position-relative">
+            <div class="card">
+                <div class="card-header">
+                    Arm guard creation
+                </div>
+                <div class="card-body">
+                    <!-- add buttons for model selection -->
+                    <div class="container mt-4">
+                        <label for="armCastType" class="form-label">Type </label>
+                        <select class="form-select" id="armCastType">
+                            <option value="0">Ulnar gutter</option>
+                            <option value="1">Wrist splint proximal (no thumb))</option>
+                            <option value="2">Wrist splint distal (no thumb)</option>
+                            <option value="3">Wrist splint proximal (thumb)</option>
+                            <option value="4">Wrist splint distal (thumb)</option>
+                            <option value="5">Resting hand splint</option>
+                            <option value="6">Cock up splint</option>
+                        </select>
+                    </div>
+
+                    <hr>
+                    <img id="bImage" src="images/b0.png" alt="Descriptive Alt Text" class="custom-img-size">
+                    <img id="pImage" src="images/p0.png" alt="Descriptive Alt Text" class="custom-img-size">
+                    <hr>
+                    <!--
+                    <div class="input-group mb-3">
+                        <label for="smoothingSlider">Smoothing</label>
+                        <input type="range" class="form-range" value=1 id="smoothingSlider" min="0" max="3.5" step="0.01">
+                    </div>
+                    -->
+                    <hr>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="inputGroup-sizing-default">Thickness (mm)</span>
+                        <input id = "thickness" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+                        <span class="input-group-text" id="inputGroup-sizing-default2">Offset (mm)</span>
+                        <input id = "offset" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default2">
+
+                    </div>
+
+                    <hr>
+                    <!--
+                    <button id="preview" type="button" class="btn btn-primary">Preview Region</button>
+                    -->
+                    <button id="createModel" type="button" class="btn btn-primary">Create Model</button>
+                    <button id="exportPLY" type="button" class="btn btn-primary">Export PLY</button>
+                </div>
+                <hr>
+
+
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<script src="js/mymaths.js"></script>
+<script src="js/interpolation.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/server.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/materials.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/buttons.js"></script>
+<script src="js/keys.js"></script>
+<script src="js/mouse.js"></script>
+<script src="js/renderer.js">
+</script>
+</body>
+</html>
