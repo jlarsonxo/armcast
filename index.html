@@ -89,6 +89,7 @@
         .tick.checked {
             display: inline-block; /* Show the tick when checked */
         }
+
         .custom-img-size {
             width: 300px;
             height: auto;
@@ -184,9 +185,9 @@
                             <option value="0">Ulnar gutter</option>
                             <option value="1">Wrist splint proximal (no thumb))</option>
                             <option value="2">Wrist splint distal (no thumb)</option>
-                            <option value="3">Wrist splint proximal (thumb)</option>
-                            <option value="4">Wrist splint distal (thumb)</option>
-                            <option value="5">Resting hand splint</option>
+                            <option value="3">Resting hand splint</option>
+                            <option value="4">Wrist splint proximal (thumb)</option>
+                            <option value="5">Wrist splint distal (thumb)</option>
                             <option value="6">Cock up splint</option>
                         </select>
                     </div>
@@ -204,9 +205,11 @@
                     <hr>
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="inputGroup-sizing-default">Thickness (mm)</span>
-                        <input id = "thickness" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+                        <input value=2 id="thickness" type="text" class="form-control" aria-label="Sizing example input"
+                               aria-describedby="inputGroup-sizing-default">
                         <span class="input-group-text" id="inputGroup-sizing-default2">Offset (mm)</span>
-                        <input id = "offset" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default2">
+                        <input value=1 id="offset" type="text" class="form-control" aria-label="Sizing example input"
+                               aria-describedby="inputGroup-sizing-default2">
 
                     </div>
 
@@ -218,6 +221,13 @@
                     <button id="exportPLY" type="button" class="btn btn-primary">Export PLY</button>
                 </div>
                 <hr>
+                <!-- Add text area for JSON -->
+                <div class="card-header">
+                    Information
+                </div>
+                <div class="card-body">
+                    <div id="infoArea" style="height: 200px"></div>
+                </div>
 
 
             </div>

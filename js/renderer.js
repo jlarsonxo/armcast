@@ -16,16 +16,19 @@ let curves3D = [];
 
 let splitHandCurves = null;
 let splitHandCurves3D = [];
-let splitHandVals = []
+let splitHandVals = [];
+let currentOffset = 1.0;
+let currentThickness = 2.0;
 let up = new THREE.Vector3(0, 0, 1);
 
 const ARM_CAST_TYPES = {
     ULNAR_GUTTER: 0,
     WRIST_SPLINT_PROXIMAL_NO_THUMB: 1,
     WRIST_SPLINT_DISTAL_NO_THUMB: 2,
-    WRIST_SPLINT_PROXIMAL_THUMB: 3,
-    WRIST_SPLINT_DISTAL_THUMB: 4,
-    RESTING_HAND_SPLINT: 5,
+    RESTING_HAND_SPLINT: 3,
+    WRIST_SPLINT_PROXIMAL_THUMB: 4,
+    WRIST_SPLINT_DISTAL_THUMB: 5,
+
     COCK_UP_SPLINT: 6
 };
 

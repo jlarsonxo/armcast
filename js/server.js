@@ -1,6 +1,6 @@
 const hostName = window.location.hostname;
 
-console.log("Host name:" , hostName);
+console.log("Host name:", hostName);
 
 let servers_urls = {
     ares: 'wss://geometry-server.com/ws/',
@@ -10,7 +10,7 @@ let servers_urls = {
 
 server_url = servers_urls.local;
 
-if(hostName === 'valerocar.github.io' || hostName === 'align-tool.geometry-server.com'){
+if (hostName === 'valerocar.github.io' || hostName === 'align-tool.geometry-server.com') {
     console.log("Geometry Server on ares")
     server_url = servers_urls.ares;
 }
@@ -33,17 +33,18 @@ geometryServer.onopen = function () {
 };
 
 
+let infoArea = document.getElementById('infoArea');
 geometryServer.onmessage = function (event) {
     let data = JSON.parse(event.data);
-    console.log("Received message from server:");
+    infoArea.innerHTML =  data['message'] + "<br>" + "Status: " + data['status'];
     const deformProcesses = ['rotate', 'translate']
-    if(data['status'] === 'translating' || data['status'] === 'rotating'){
+    if (data['status'] === 'translating' || data['status'] === 'rotating') {
         awaitingAck = false;
     }
-    if(data['process'] === 'session_warning'){
+    if (data['process'] === 'session_warning') {
         alert(data['message']);
     }
-    if(data['process'] === 'session_end'){
+    if (data['process'] === 'session_end') {
         alert(data['message']);
         //window.location.href = 'index.html';
     }
@@ -52,8 +53,7 @@ geometryServer.onmessage = function (event) {
         let xs = data.xs;
         let ys = data.ys;
         let zs = data.zs;
-        if(xs)
-        {
+        if (xs) {
             let n = xs.length;
             for (let i = 0; i < n; i++) {
                 geometry.attributes.position.setX(i, xs[i]);
@@ -63,8 +63,13 @@ geometryServer.onmessage = function (event) {
             geometry.attributes.position.needsUpdate = true;
         }
     }
-    if(data.process === 'create_arm_cast') {
+    if (data.process === 'create_arm_cast') {
         console.log("Thicken selection response", data);
+        // get object by name
+        let acm = scene.getObjectByName("armCastModel");
+        if (acm) {
+            scene.remove(acm);
+        }
         let xs = data.xs;
         let ys = data.ys;
         let zs = data.zs;
@@ -109,11 +114,14 @@ geometryServer.onmessage = function (event) {
             visible: true
         });
         let mesh = new THREE.Mesh(geometry, material);
-        mesh.name = "ThickenedModel";
+        mesh.name = "armCastModel";
         scene.add(mesh);
         model.material = xrayMaterial;
         // remove elements in splitHandCurves3D from scene
         splitHandCurves3D.map(c => scene.remove(c));
+        // set selected points to empty and remove them from scene
+        //pointsSelected.map(p => scene.remove(p));
+        //pointsSelected = [];
     }
 };
 
@@ -129,7 +137,7 @@ function sendModelToServer() {
     }
 }
 
-function processModel(){
+function processModel() {
     if (isGeometryServerOpen && !modelSentToServer) {
         let pointsData = [];
         pointsSelected.map(p => {
@@ -148,13 +156,14 @@ function processModel(){
                 pointsData.push(pointData);
             }
         );
-
         console.log("Point selection", pointsData);
         let jsonGeometry = geometryToJSON(model.geometry)
         let msg = {
             process: "create_arm_cast",
             type: armCastSelection,
             smoothing: currentK,
+            offset: currentOffset,
+            thickness: currentThickness,
             selected_points: pointsData,
             geometry: jsonGeometry,
         };

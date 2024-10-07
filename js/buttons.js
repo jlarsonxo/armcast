@@ -112,21 +112,19 @@ function saveArrayBuffer(buffer, filename) {
 }
 
 document.getElementById("exportPLY").addEventListener('click', function () {
-    model = scene.getObjectByName(modelName);
-    if (model) {
+    let acm = scene.getObjectByName("armCastModel");
+    if (acm) {
         const exporter = new THREE.PLYExporter();
-        model.geometry.computeVertexNormals();
-        exporter.parse(model, (result) => {
-            saveArrayBuffer(result, modelName + 'Exported.ply');
+        acm.geometry.computeVertexNormals();
+        exporter.parse(acm, (result) => {
+            saveArrayBuffer(result, modelName + 'ArmCast.ply');
         }, {binary: true});
     }
 });
 
 
-
 function updateRegionFromFunction(ps, fs, values, level = 0.5) {
-    for(let i = 0; i < modelSelectionFlags.length; i++)
-    {
+    for (let i = 0; i < modelSelectionFlags.length; i++) {
         modelSelectionFlags[i] = (values[i] >= level);
     }
     let edges = levelCurve(ps, fs, values, level);
@@ -138,15 +136,14 @@ function updateRegionFromFunction(ps, fs, values, level = 0.5) {
 }
 
 
-function setSelectionFunctionToUlnar()
-{
+function setSelectionFunctionToUlnar() {
     console.log('Creating ulnar model');
     console.log('9 points needed');
     console.log('points selected', pointsSelected.length);
     // get pointsSelected x and y values
     let xs = pointsSelected.map(p => p.position.x);
     let ys = pointsSelected.map(p => p.position.y);
-    let spline = cubicSpline(ys,xs);
+    let spline = cubicSpline(ys, xs);
     console.log('spline', spline);
 
     /*
@@ -185,12 +182,12 @@ function setSelectionFunctionToUlnar()
     }
 
      */
-    selectionFunction = function(idx){
+    selectionFunction = function (idx) {
         let p = ps[idx];
         let y = p.y;
         let x = p.x;//evaluateSpline(spline, y);
         x = evaluateSpline(spline, y);
-        return sigmoid(x-.025*y*y,currentK)//*(1-sigmoid(splitHandVals[idx],currentK));
+        return sigmoid(x - .025 * y * y, currentK)//*(1-sigmoid(splitHandVals[idx],currentK));
     }
 }
 
@@ -281,3 +278,15 @@ document.getElementById('armCastType').addEventListener('change', function () {
     bImage.src = 'images/b' + armCastType + '.png';
     pImage.src = 'images/p' + armCastType + '.png'
 });
+
+document.getElementById('thickness').addEventListener('input', function () {
+        currentThickness = this.value;
+        document.getElementById('thicknessValue').innerText = currentThickness;
+    }
+);
+
+document.getElementById('offset').addEventListener('input', function () {
+        currentOffset = this.value;
+        document.getElementById('offsetValue').innerText = currentOffset;
+    }
+);
