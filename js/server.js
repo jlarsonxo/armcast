@@ -37,6 +37,10 @@ let infoArea = document.getElementById('infoArea');
 geometryServer.onmessage = function (event) {
     let data = JSON.parse(event.data);
     infoArea.innerHTML =  data['message'] + "<br>" + "Status: " + data['status'];
+    if(data['status'] ==='error'){
+        document.getElementById('spinner').classList.add('d-none');
+        return;
+    }
     const deformProcesses = ['rotate', 'translate']
     if (data['status'] === 'translating' || data['status'] === 'rotating') {
         awaitingAck = false;
@@ -123,6 +127,7 @@ geometryServer.onmessage = function (event) {
         //pointsSelected.map(p => scene.remove(p));
         //pointsSelected = [];
     }
+
 };
 
 function sendModelToServer() {

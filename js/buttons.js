@@ -212,6 +212,7 @@ document.getElementById("createModel").addEventListener('click', function () {
     model = scene.getObjectByName(modelName);
     if (model) {
         console.log("Creating model");
+        document.getElementById('spinner').classList.remove('d-none');
         processModel();
     }
 });

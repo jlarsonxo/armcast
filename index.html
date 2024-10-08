@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XOArmor 3D Tool</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css">
+    <title>XOArmor ArmCast Tool</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/PLYLoader.js"></script>
@@ -219,8 +219,13 @@
                     <!--
                     <button id="preview" type="button" class="btn btn-primary">Preview Region</button>
                     -->
-                    <button id="createModel" type="button" class="btn btn-primary">Create Model</button>
+                    <button id="createModel" type="button" class="btn btn-primary">
+                        <span class="spinner-border spinner-border-sm d-none" id="spinner" role="status" aria-hidden="false">
+                        </span>
+                        Create Model
+                    </button>
                     <button id="exportPLY" type="button" class="btn btn-primary">Export PLY</button>
+
                 </div>
                 <hr>
                 <!-- Add text area for JSON -->
