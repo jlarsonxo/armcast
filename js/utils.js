@@ -1,3 +1,70 @@
+
+function alignGeometry(geometry){
+    const positions = geometry.attributes.position.array;
+    const numPoints = positions.length / 3;
+
+    // Calculate mean position
+    const mean = [0, 0, 0];
+    for (let i = 0; i < positions.length; i += 3) {
+        mean[0] += positions[i];
+        mean[1] += positions[i + 1];
+        mean[2] += positions[i + 2];
+    }
+    mean[0] /= numPoints;
+    mean[1] /= numPoints;
+    mean[2] /= numPoints;
+
+    // Calculate covariance matrix
+    let covariance = math.zeros(3, 3);
+    for (let i = 0; i < positions.length; i += 3) {
+        const x = positions[i] - mean[0];
+        const y = positions[i + 1] - mean[1];
+        const z = positions[i + 2] - mean[2];
+        covariance = math.add(covariance, math.matrix([
+            [x * x, x * y, x * z],
+            [x * y, y * y, y * z],
+            [x * z, y * z, z * z]
+        ]));
+    }
+
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+            covariance.set([i, j], covariance.get([i, j]) / (numPoints - 1));
+        }
+    }
+    const { eigenvectors } = math.eigs(covariance);
+    let e0 = eigenvectors[1].vector;
+    let e1 = eigenvectors[2].vector;
+    let e2 = eigenvectors[0].vector;
+    const transformMatrix = new THREE.Matrix4().makeBasis(
+        new THREE.Vector3(e0._data[0], e0._data[1], e0._data[2]),
+        new THREE.Vector3(e1._data[0], e1._data[1], e1._data[2]),
+        new THREE.Vector3(e2._data[0], e2._data[1], e2._data[2])
+    );
+    // Transpose the matrix
+    transformMatrix.transpose();
+    console.log("Transform matrix:", transformMatrix);
+
+    // Apply transformation to positions
+
+    for (let i = 0; i < positions.length; i += 3) {
+        const point = new THREE.Vector3(
+            positions[i] - mean[0],
+            positions[i + 1] - mean[1],
+            positions[i + 2] - mean[2]
+        );
+        point.applyMatrix4(transformMatrix);
+
+        positions[i] = point.x;
+        positions[i + 1] = point.y;
+        positions[i + 2] = point.z;
+    }
+    geometry.attributes.position.needsUpdate = true;
+    let scale = 1000;
+    geometry.scale(scale, scale, scale);
+    geometry.computeVertexNormals();
+}
+
 function loadMesh(file, scene, name, onLoadCallback = undefined) {
     const loader = new THREE.PLYLoader();
     console.log("Loading mesh from file", file);
@@ -10,84 +77,7 @@ function loadMesh(file, scene, name, onLoadCallback = undefined) {
                 geometry.attributes.color.array[i + 2] = .5;
             }
         }
-        // Compute eigenvectors of covariance matrix of geometry positions
-        const positions = geometry.attributes.position.array;
-        const numPoints = positions.length / 3;
-        
-        // Calculate mean position
-        const mean = [0, 0, 0];
-        for (let i = 0; i < positions.length; i += 3) {
-            mean[0] += positions[i];
-            mean[1] += positions[i + 1];
-            mean[2] += positions[i + 2];
-        }
-        mean[0] /= numPoints;
-        mean[1] /= numPoints;
-        mean[2] /= numPoints;
-    
-
-        // Calculate covariance matrix
-        let covariance = math.zeros(3, 3);
-        for (let i = 0; i < positions.length; i += 3) {
-            const x = positions[i] - mean[0];
-            const y = positions[i + 1] - mean[1];
-            const z = positions[i + 2] - mean[2];
-            covariance = math.add(covariance, math.matrix([
-                [x * x, x * y, x * z],
-                [x * y, y * y, y * z],
-                [x * z, y * z, z * z]
-            ]));
-        }
-        
-        for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 3; j++) {
-                covariance.set([i, j], covariance.get([i, j]) / (numPoints - 1));
-            }
-        }
-
-        // Compute eigenvectors
-        const { eigenvectors } = math.eigs(covariance);
-        let e0 = eigenvectors[1].vector;
-        let e1 = eigenvectors[2].vector;
-        let e2 = eigenvectors[0].vector;
-
-        
-        console.log("Eigenvectorss:", e0, e1, e2);
-
-        
-        const transformMatrix = new THREE.Matrix4().makeBasis(
-            new THREE.Vector3(e0._data[0], e0._data[1], e0._data[2]),
-            new THREE.Vector3(e1._data[0], e1._data[1], e1._data[2]),
-            new THREE.Vector3(e2._data[0], e2._data[1], e2._data[2])
-        );
-        // Transpose the matrix
-        transformMatrix.transpose();
-        console.log("Transform matrix:", transformMatrix);
-
-        // Apply transformation to positions
-        
-        for (let i = 0; i < positions.length; i += 3) {
-            const point = new THREE.Vector3(
-                positions[i] - mean[0],
-                positions[i + 1] - mean[1],
-                positions[i + 2] - mean[2]
-            );
-            point.applyMatrix4(transformMatrix);
-
-            positions[i] = point.x;
-            positions[i + 1] = point.y;
-            positions[i + 2] = point.z;
-        }
-
-        // Update the geometry
-        geometry.attributes.position.needsUpdate = true;
-
-        console.log("Eigenvectors:", eigenvectors);
-        
-        //geometry.center();
-        let scale = 1000;
-        geometry.scale(scale, scale, scale);
-        geometry.computeVertexNormals();
+        alignGeometry(geometry);
         let mesh = new THREE.Mesh(geometry, mainMaterial);
         mesh.name = modelName;
         scene.add(mesh);

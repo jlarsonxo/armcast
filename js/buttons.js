@@ -86,10 +86,7 @@ document.getElementById('uploadForm').addEventListener('submit', function (e) {
                     geometry.attributes.color.array[i + 2] = .5;
                 }
             }
-            geometry.center();
-            let scale = 1000;
-            geometry.scale(scale, scale, scale);
-            geometry.computeVertexNormals();
+            alignGeometry(geometry);
             let mesh = new THREE.Mesh(geometry, mainMaterial);
             modelName = file.name.split('.').slice(0, -1).join('.');
             mesh.name = modelName;
