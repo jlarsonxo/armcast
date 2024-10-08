@@ -44,4 +44,4 @@ loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json
 // Add axes to scene for reference
 let axes = new THREE.AxesHelper(100);
 scene.add(axes);
-loadMesh('../data/default.ply', scene, 'model', false);
+loadMesh('./data/default.ply', scene, 'model', false);
